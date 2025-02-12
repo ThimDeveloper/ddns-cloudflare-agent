@@ -104,6 +104,8 @@ func upsertDNSRecord(providerConfig *ProviderConfig, latestRouterIp string) {
 				fmt.Println(err)
 			}
 			fmt.Printf("Updated %s to IP %s at %s\n", record.Name, record.Content, response.ModifiedOn.String())
+		} else {
+			fmt.Println("No change in IP. Skipping...")
 		}
 	}
 
