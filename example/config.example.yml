@@ -1,0 +1,11 @@
+dns_provider:
+  cloudflare:
+    api_token: ""
+    zone_id: ""
+    records:
+      - name: codedungeon.xyz
+        id: a123
+        type: a
+      - name: "*.codedungeon.xyz"
+        id: b123
+        type: a
