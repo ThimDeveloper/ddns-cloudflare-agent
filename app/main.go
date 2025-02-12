@@ -96,14 +96,14 @@ func upsertDNSRecord(providerConfig *ProviderConfig, latestRouterIp string) {
 			fmt.Printf("IP change detected!\nOld IP: %s\nNew IP: %s\n", record.Content, latestRouterIp)
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 			defer cancel()
-			response, err := client.DNS.Records.Edit(ctx, record.ID, dns.RecordEditParams{
+			_, err := client.DNS.Records.Edit(ctx, record.ID, dns.RecordEditParams{
 				ZoneID: cloudflare.F(providerConfig.DNSProvider.Cloudflare.ZoneID),
 				Record: dns.RecordParam{Content: cloudflare.F(latestRouterIp)},
 			})
 			if err != nil {
 				fmt.Println(err)
 			}
-			fmt.Printf("Updated %s to IP %s at %s\n", record.Name, record.Content, response.ModifiedOn.String())
+			fmt.Printf("Updated %s to IP %s\n", record.Name, latestRouterIp)
 		} else {
 			fmt.Println("No change in IP. Skipping...")
 		}
