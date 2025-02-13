@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
 	"os"
 	"time"
 
@@ -16,53 +15,13 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-type ConfigRecord struct {
-	Name string `yaml:"name"`
-	ID   string `yaml:"id"`
-	Type string `yaml:"type"`
-}
-type ProviderConfig struct {
-	DNSProvider struct {
-		Cloudflare struct {
-			APIToken string         `yaml:"api_token"`
-			ZoneID   string         `yaml:"zone_id"`
-			Records  []ConfigRecord `yaml:"records"`
-		} `yaml:"cloudflare"`
-	} `yaml:"dns_provider"`
-}
-
-type ExternalIPResponse struct {
-	IP string `json:"ip"`
-}
-
-type IPIFYResponse struct {
-	IP string `json:"ip"`
-}
-
-type IPAPIResponse struct {
-	Query       string  `json:"query"`
-	Status      string  `json:"status"`
-	Country     string  `json:"country"`
-	CountryCode string  `json:"countryCode"`
-	Region      string  `json:"region"`
-	RegionName  string  `json:"regionName"`
-	City        string  `json:"city"`
-	Zip         string  `json:"zip"`
-	Lat         float64 `json:"lat"`
-	Lon         float64 `json:"lon"`
-	Timezone    string  `json:"timezone"`
-	Isp         string  `json:"isp"`
-	Org         string  `json:"org"`
-	As          string  `json:"as"`
-}
-
 var IPAPI_URL string = "http://ip-api.com/json"
 var IPIFY_URL string = "https://api.ipify.org?format=json"
 var CLOUDFLARE_HOST string = "https://api.cloudflare.com/client/v4"
 
 func check(e error) {
 	if e != nil {
-		panic(e)
+		fmt.Println(e)
 	}
 
 }
@@ -76,7 +35,6 @@ func upsertDNSRecord(providerConfig *ProviderConfig, latestRouterIp string) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
 
-	fmt.Printf("Fetching information for %s\n", providerConfig.DNSProvider.Cloudflare.Records)
 	records, err := client.DNS.Records.List(ctx, dns.RecordListParams{
 		ZoneID: cloudflare.F(providerConfig.DNSProvider.Cloudflare.ZoneID),
 	})
@@ -133,11 +91,9 @@ func readConfiguration() (ProviderConfig, error) {
 }
 
 func main() {
-	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	currentExternalIP, err := getExternalIp()
 	check(err)
 	configuration, err := readConfiguration()
 	check(err)
 	upsertDNSRecord(&configuration, currentExternalIP.IP)
-
 }

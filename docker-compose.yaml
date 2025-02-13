@@ -1,0 +1,8 @@
+services:
+    ddns-cloudflare-agent:
+        container_name: ddns-cloudflare-agent
+        image: ddns-cloudflare-agent:latest
+        build:
+            context: .
+        volumes:
+            - ./config:/etc/ddns-cloudflare-agent
