@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"fmt"
+	"log/slog"
 	"os"
 	"time"
 
@@ -21,7 +21,8 @@ var CLOUDFLARE_HOST string = "https://api.cloudflare.com/client/v4"
 
 func check(e error) {
 	if e != nil {
-		fmt.Println(e)
+		slog.Error(e.Error())
+		panic(e)
 	}
 
 }
@@ -51,7 +52,7 @@ func upsertDNSRecord(providerConfig *ProviderConfig, latestRouterIp string) {
 
 	for _, record := range matchingRecords {
 		if record.Content != latestRouterIp {
-			fmt.Printf("IP change detected!\nOld IP: %s\nNew IP: %s\n", record.Content, latestRouterIp)
+			slog.Info("IP change detected!\nOld IP: %s\nNew IP: %s\n", record.Content, latestRouterIp)
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 			defer cancel()
 			_, err := client.DNS.Records.Edit(ctx, record.ID, dns.RecordEditParams{
@@ -59,11 +60,11 @@ func upsertDNSRecord(providerConfig *ProviderConfig, latestRouterIp string) {
 				Record: dns.RecordParam{Content: cloudflare.F(latestRouterIp)},
 			})
 			if err != nil {
-				fmt.Println(err)
+				slog.Error(err.Error())
 			}
-			fmt.Printf("Updated %s to IP %s\n", record.Name, latestRouterIp)
+			slog.Info("Updated %s to IP %s\n", record.Name, latestRouterIp)
 		} else {
-			fmt.Println("No change in IP. Skipping...")
+			slog.Info("No change in IP. Skipping...")
 		}
 	}
 
@@ -78,12 +79,12 @@ func readConfiguration() (ProviderConfig, error) {
 	var providerConfig ProviderConfig
 	data, err := os.ReadFile(configFilePath)
 	if err != nil {
-		fmt.Println(err)
+		slog.Error(err.Error())
 		return ProviderConfig{}, err
 	}
 	err = yaml.Unmarshal(data, &providerConfig)
 	if err != nil {
-		fmt.Println(err)
+		slog.Error(err.Error())
 		return ProviderConfig{}, err
 	}
 	return providerConfig, nil
@@ -91,6 +92,18 @@ func readConfiguration() (ProviderConfig, error) {
 }
 
 func main() {
+	switch os.Getenv("LOG_LEVEL") {
+	case "DEBUG":
+		slog.SetLogLoggerLevel(slog.LevelDebug)
+	case "INFO":
+		slog.SetLogLoggerLevel(slog.LevelInfo)
+	case "WARN":
+		slog.SetLogLoggerLevel(slog.LevelWarn)
+	case "ERROR":
+		slog.SetLogLoggerLevel(slog.LevelError)
+	default:
+		slog.SetLogLoggerLevel(slog.LevelInfo)
+	}
 	currentExternalIP, err := getExternalIp()
 	check(err)
 	configuration, err := readConfiguration()
