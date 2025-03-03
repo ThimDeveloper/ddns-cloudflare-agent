@@ -6,3 +6,10 @@ build:
 .PHONY: run
 run:
 	@cd app && go run .
+
+IMAGE_VERSION=1.0.0
+
+.PHONY: docker-build
+docker-publish:
+	docker build -t thimlohse/ddns-cloudflare-agent:$(IMAGE_VERSION) .
+	docker push thimlohse/ddns-cloudflare-agent:$(IMAGE_VERSION)
