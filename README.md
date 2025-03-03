@@ -5,6 +5,8 @@ A simple ddns-agent for cloudflare that automatically updates DNS records to poi
 ## Usage
 
 ### Configure the provider
+Create a file named `config.yml` in `/etc/ddns-cloudflare-agent`
+
 ```yaml
 dns_provider:
   cloudflare:
