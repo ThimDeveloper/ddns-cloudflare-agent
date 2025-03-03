@@ -36,7 +36,8 @@ Setup small shell script to invoke docker for easier reference in crontab:
 ```bash
 # ddns-cloudflare-agent in /usr/local/bin
 echo "Invoking ddns-cloudflare-agent"
-docker compose -f <path-to-docker-compose> up -d
+docker compose -f <path-to-docker-compose> down
+docker compose -f <path-to-docker-compose> up -d --remove-orphans
 ```
 
 Make script executable:
