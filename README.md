@@ -26,5 +26,24 @@ services:
         container_name: ddns-cloudflare-agent
         image: ddns-cloudflare-agent:latest # or pin specific version
         volumes:
-            - ./config:/etc/ddns-cloudflare-agent # <-- mount point in container
+            - /etc/ddns-cloudflare-agent:/etc/ddns-cloudflare-agent # <-- mount point in container
+```
+
+## Schedule the container to run on fixed schedule
+
+Setup small shell script to invoke docker for easier reference in crontab:
+```bash
+# ddns-cloudflare-agent in /usr/local/bin
+echo "Invoking ddns-cloudflare-agent"
+docker compose -f <path-to-docker-compose> up -d
+```
+
+Make script executable:
+```bash
+chmod +x /usr/local/bin/ddns-cloudflare-agent
+```
+
+```bash
+# Example using crontab (crontab -e)
+0 0-23 * * * ddns-cloudflare-agent
 ```
