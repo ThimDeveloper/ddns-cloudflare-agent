@@ -12,9 +12,4 @@ IMAGE_VERSION=1.0.0
 
 .PHONY: docker-publish
 docker-publish:
-	docker build -t thimlohse/ddns-cloudflare-agent:local .
-	docker tag thimlohse/ddns-cloudflare-agent:local thimlohse/ddns-cloudflare-agent:$(IMAGE_VERSION)
-	docker tag thimlohse/ddns-cloudflare-agent:local thimlohse/ddns-cloudflare-agent:latest
-	
-	docker push thimlohse/ddns-cloudflare-agent:$(IMAGE_VERSION)
-	docker push thimlohse/ddns-cloudflare-agent:latest
+	docker buildx build --platform linux/arm64,linux/amd64 -t thimlohse/ddns-cloudflare-agent:$(IMAGE_VERSION) -t thimlohse/ddns-cloudflare-agent:latest  . --push

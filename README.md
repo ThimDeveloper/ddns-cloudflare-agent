@@ -25,7 +25,6 @@ dns_provider:
 ```yaml
 services:
     ddns-cloudflare-agent:
-        container_name: ddns-cloudflare-agent
         image: ddns-cloudflare-agent:latest # or pin specific version
         volumes:
             - /etc/ddns-cloudflare-agent:/etc/ddns-cloudflare-agent # <-- mount point in container
