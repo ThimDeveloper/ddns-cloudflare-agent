@@ -9,6 +9,7 @@ import (
 	"github.com/cloudflare/cloudflare-go/v4"
 	"github.com/cloudflare/cloudflare-go/v4/dns"
 	"github.com/cloudflare/cloudflare-go/v4/option"
+	"github.com/go-co-op/gocron/v2"
 
 	"github.com/thoas/go-funk"
 
@@ -91,6 +92,14 @@ func readConfiguration() (ProviderConfig, error) {
 
 }
 
+func runDdns() {
+	currentExternalIP, err := getExternalIp()
+	check(err)
+	configuration, err := readConfiguration()
+	check(err)
+	upsertDNSRecord(&configuration, currentExternalIP.IP)
+}
+
 func main() {
 	switch os.Getenv("LOG_LEVEL") {
 	case "DEBUG":
@@ -104,9 +113,41 @@ func main() {
 	default:
 		slog.SetLogLoggerLevel(slog.LevelInfo)
 	}
-	currentExternalIP, err := getExternalIp()
-	check(err)
-	configuration, err := readConfiguration()
-	check(err)
-	upsertDNSRecord(&configuration, currentExternalIP.IP)
+	runInDocker := os.Getenv("RUN_IN_DOCKER") == "true"
+	if runInDocker {
+		slog.Debug("Running in Docker")
+		dockerScheduleInterval, isDockerScheduleIntervalPresent := os.LookupEnv("DOCKER_SCHEDULE_INTERVAL")
+
+		var scheduleInterval time.Duration = time.Duration(600) * time.Second
+		if isDockerScheduleIntervalPresent {
+			overrideInterval, err := time.ParseDuration(dockerScheduleInterval)
+			check(err)
+			slog.Debug("Setting schedule interval", "scheduleIntervalSeconds", scheduleInterval.Seconds())
+			scheduleInterval = overrideInterval * time.Second
+		} else {
+			slog.Debug("Using default schedule interval", "scheduleIntervalSeconds", "600")
+		}
+
+		s, err := gocron.NewScheduler()
+		if err != nil {
+			check(err)
+		}
+
+		j, err := s.NewJob(
+			gocron.DurationJob(
+				scheduleInterval,
+			),
+			gocron.NewTask(runDdns),
+		)
+		if err != nil {
+			check(err)
+		}
+		slog.Debug(j.ID().String())
+		s.Start()
+
+		select {} // block forever until the program is terminated
+	} else {
+		slog.Debug("Running binary outside of Docker")
+		runDdns()
+	}
 }

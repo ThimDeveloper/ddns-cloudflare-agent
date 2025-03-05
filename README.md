@@ -5,7 +5,7 @@ A simple ddns-agent for cloudflare that automatically updates DNS records to poi
 ## Usage
 
 ### Configure the provider
-Create a file named `config.yml` in `/etc/ddns-cloudflare-agent`
+Create a file named `config.yml` in a directory named `/etc/ddns-cloudflare-agent`
 
 ```yaml
 dns_provider:
@@ -21,31 +21,36 @@ dns_provider:
         type: a
 ```
 
-### Mount the configuration
+### Using docker-compose
+
+#### Mount the configuration
+
+When running the agent as a docker container is makes more sense to let the application in the container re-schedule itself on a specified interval than to reschedule the binary using cron. This way the container can be stopped and started without losing the schedule.
+The also allows for easier log checks of the container.
+
 ```yaml
 services:
     ddns-cloudflare-agent:
         image: ddns-cloudflare-agent:latest # or pin specific version
+        environment:
+            RUN_IN_DOCKER: "true"
+            DOCKER_SCHEDULE_INTERVAL: 300 # override ddns update interval e.g. every 5 minutes in seconds (default 600)
         volumes:
             - /etc/ddns-cloudflare-agent:/etc/ddns-cloudflare-agent # <-- mount point in container
 ```
 
-## Schedule the container to run on fixed schedule
+### Using the binary
 
-Setup small shell script to invoke docker for easier reference in crontab:
+### Build the binary
+
 ```bash
-# ddns-cloudflare-agent in /usr/local/bin
-echo "Invoking ddns-cloudflare-agent"
-docker compose -f <path-to-docker-compose> down
-docker compose -f <path-to-docker-compose> up -d --remove-orphans
+# Cross compile for linux, windows and mac
+./build.sh
 ```
 
-Make script executable:
-```bash
-chmod +x /usr/local/bin/ddns-cloudflare-agent
-```
+#### Schedule the binary using system scheduler
 
 ```bash
 # Example using crontab (crontab -e)
-0 0-23 * * * ddns-cloudflare-agent
+0 0-23 * * * /path/to/ddns-cloudflare-agent
 ```

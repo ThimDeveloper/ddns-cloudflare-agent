@@ -4,5 +4,9 @@ services:
         image: ddns-cloudflare-agent:latest
         build:
             context: .
+        environment:
+            LOG_LEVEL: DEBUG
+            RUN_IN_DOCKER: "true"
+            DOCKER_SCHEDULE_INTERVAL: 10 # override ddns update interval e.g. every 10 seconds (default 600s = 10m)
         volumes:
             - ./config:/etc/ddns-cloudflare-agent
