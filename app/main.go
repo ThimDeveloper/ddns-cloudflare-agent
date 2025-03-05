@@ -4,6 +4,7 @@ import (
 	"context"
 	"log/slog"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/cloudflare/cloudflare-go/v4"
@@ -53,7 +54,7 @@ func upsertDNSRecord(providerConfig *ProviderConfig, latestRouterIp string) {
 
 	for _, record := range matchingRecords {
 		if record.Content != latestRouterIp {
-			slog.Info("IP change detected!\nOld IP: %s\nNew IP: %s\n", record.Content, latestRouterIp)
+			slog.Info("IP change detected!", "old", record.Content, "new", latestRouterIp)
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 			defer cancel()
 			_, err := client.DNS.Records.Edit(ctx, record.ID, dns.RecordEditParams{
@@ -63,7 +64,7 @@ func upsertDNSRecord(providerConfig *ProviderConfig, latestRouterIp string) {
 			if err != nil {
 				slog.Error(err.Error())
 			}
-			slog.Info("Updated %s to IP %s\n", record.Name, latestRouterIp)
+			slog.Info("Updated IP", "old", record.Name, "new", latestRouterIp)
 		} else {
 			slog.Info("No change in IP. Skipping...")
 		}
@@ -120,12 +121,12 @@ func main() {
 
 		var scheduleInterval time.Duration = time.Duration(600) * time.Second
 		if isDockerScheduleIntervalPresent {
-			overrideInterval, err := time.ParseDuration(dockerScheduleInterval)
+			overrideInterval, err := strconv.Atoi(dockerScheduleInterval)
 			check(err)
-			slog.Debug("Setting schedule interval", "scheduleIntervalSeconds", scheduleInterval.Seconds())
-			scheduleInterval = overrideInterval * time.Second
+			slog.Debug("Setting schedule interval", "scheduleIntervalSeconds", time.Duration(overrideInterval)*time.Second)
+			scheduleInterval = time.Duration(overrideInterval) * time.Second
 		} else {
-			slog.Debug("Using default schedule interval", "scheduleIntervalSeconds", "600")
+			slog.Debug("Using default schedule interval", "scheduleIntervalSeconds", "600s")
 		}
 
 		s, err := gocron.NewScheduler()
