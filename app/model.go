@@ -8,10 +8,17 @@ type ConfigRecord struct {
 type ProviderConfig struct {
 	DNSProvider struct {
 		Cloudflare struct {
+			Enabled  bool           `yaml:"enabled"`
 			APIToken string         `yaml:"api_token"`
 			ZoneID   string         `yaml:"zone_id"`
 			Records  []ConfigRecord `yaml:"records"`
 		} `yaml:"cloudflare"`
+		AWS struct {
+			Enabled      bool           `yaml:"enabled"`
+			HostedZoneID string         `yaml:"hosted_zone_id"`
+			Comment      string         `yaml:"comment"`
+			Records      []ConfigRecord `yaml:"records"`
+		} `yaml:"aws"`
 	} `yaml:"dns_provider"`
 }
 
